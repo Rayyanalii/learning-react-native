@@ -1,12 +1,27 @@
 import SearchBar from "@/components/SearchBar";
+import UserCard from "@/components/UserCard";
 import { useGetUsers } from "@/hooks/Users/useGetUsers";
 import { images } from "@/imports/images";
 import { useRouter } from "expo-router";
-import { ActivityIndicator, FlatList, Image, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  Text,
+  View,
+} from "react-native";
 
 export default function Index() {
   const router = useRouter();
-  const { data, isLoading, isError, error } = useGetUsers();
+  const {
+    data: userData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useGetUsers();
 
   const renderHeader = () => (
     <View className="pb-3">
@@ -19,7 +34,7 @@ export default function Index() {
         placeholder="Search for a movie"
       />
 
-      <Text className="text-xl font-semibold text-white mt-3 mb-3">
+      <Text className="text-2xl font-semibold text-white mt-3 mb-3">
         Latest Movies
       </Text>
     </View>
@@ -35,8 +50,14 @@ export default function Index() {
 
   if (isError) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-white">{error.message}</Text>
+      <View className="flex-1 justify-center items-center bg-primary">
+        <Text className="text-white mb-4">{error.message}</Text>
+        <Text
+          onPress={() => refetch()}
+          className="text-white underline text-base"
+        >
+          Tap to Retry
+        </Text>
       </View>
     );
   }
@@ -45,13 +66,23 @@ export default function Index() {
     <FlatList
       className="flex-1 px-5 bg-primary"
       contentContainerStyle={{ paddingBottom: 100 }}
-      data={data}
+      data={userData}
       ListHeaderComponent={renderHeader}
       keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => (
-        <Text className="text-white text-base mb-2">{item.name}</Text>
-      )}
+      renderItem={({ item }) => <UserCard {...item} />}
       showsVerticalScrollIndicator={false}
+      numColumns={3}
+      columnWrapperClassName="justify-between items-center"
+      refreshControl={
+        <RefreshControl
+          refreshing={isFetching && !isLoading}
+          onRefresh={refetch}
+          colors={["#ffffff"]}
+          tintColor="#ffffff"
+          progressBackgroundColor="#1e1e1e"
+          progressViewOffset={30}
+        />
+      }
     />
   );
 }
